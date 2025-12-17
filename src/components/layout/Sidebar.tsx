@@ -1,6 +1,9 @@
-import { LayoutDashboard, ListTodo, Settings, Sparkles, Zap } from 'lucide-react';
+import { LayoutDashboard, ListTodo, Settings, Sparkles, Zap, LogOut } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', to: '/' },
@@ -8,6 +11,13 @@ const navItems = [
 ];
 
 export function Sidebar() {
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success('Signed out successfully');
+  };
+
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 glass-strong border-r border-border/50 flex flex-col">
       {/* Logo */}
@@ -46,7 +56,7 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-border/50">
+      <div className="p-4 border-t border-border/50 space-y-3">
         <NavLink
           to="/settings"
           className={cn(
@@ -58,10 +68,27 @@ export function Sidebar() {
           <Settings className="w-5 h-5" />
           <span className="font-medium">Settings</span>
         </NavLink>
+
+        {user && (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground truncate px-2">
+              {user.email}
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
+          </div>
+        )}
         
-        <div className="mt-4 p-3 rounded-lg bg-gradient-to-br from-primary/10 to-secondary/10 border border-primary/20">
+        <div className="p-3 rounded-lg bg-gradient-to-br from-primary/10 to-secondary/10 border border-primary/20">
           <p className="text-xs text-muted-foreground">
-            Powered by <span className="text-primary font-semibold">Gemini AI</span>
+            Powered by <span className="text-primary font-semibold">AI</span>
           </p>
         </div>
       </div>

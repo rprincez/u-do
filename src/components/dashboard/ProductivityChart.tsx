@@ -1,9 +1,9 @@
-import { useStore } from '@/store/useStore';
+import { useTaskStore } from '@/hooks/useTaskStore';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from 'recharts';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 
 export function ProductivityChart() {
-  const { tasks } = useStore();
+  const { tasks } = useTaskStore();
 
   // Get last 7 days of completion data
   const last7Days = Array.from({ length: 7 }, (_, i) => {

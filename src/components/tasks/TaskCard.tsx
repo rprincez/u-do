@@ -1,4 +1,4 @@
-import { Task } from '@/store/useStore';
+import { Task, useTaskStore } from '@/hooks/useTaskStore';
 import { 
   CheckCircle2, 
   Circle, 
@@ -18,7 +18,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { useStore } from '@/store/useStore';
 
 interface TaskCardProps {
   task: Task;
@@ -32,16 +31,16 @@ const statusConfig = {
 };
 
 export function TaskCard({ task, onOpen }: TaskCardProps) {
-  const { updateTask, deleteTask } = useStore();
+  const { updateTask, deleteTask } = useTaskStore();
   const StatusIcon = statusConfig[task.status].icon;
 
-  const cycleStatus = () => {
+  const cycleStatus = async () => {
     const nextStatus: Record<Task['status'], Task['status']> = {
       todo: 'in_progress',
       in_progress: 'done',
       done: 'todo',
     };
-    updateTask(task.id, { 
+    await updateTask(task.id, { 
       status: nextStatus[task.status],
       completedAt: nextStatus[task.status] === 'done' ? Date.now() : undefined,
     });

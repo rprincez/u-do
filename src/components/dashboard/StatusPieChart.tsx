@@ -1,4 +1,4 @@
-import { useStore } from '@/store/useStore';
+import { useTaskStore } from '@/hooks/useTaskStore';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 const COLORS = {
@@ -8,7 +8,7 @@ const COLORS = {
 };
 
 export function StatusPieChart() {
-  const { tasks } = useStore();
+  const { tasks } = useTaskStore();
 
   const data = [
     { name: 'To Do', value: tasks.filter(t => t.status === 'todo').length, color: COLORS.todo },

@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { Sparkles, ArrowUpDown, Loader2 } from 'lucide-react';
-import { useStore } from '@/store/useStore';
+import { useTaskStore, Task } from '@/hooks/useTaskStore';
 import { TaskCard } from './TaskCard';
 import { TaskModal } from './TaskModal';
 import { Button } from '@/components/ui/button';
-import { prioritizeTasks } from '@/lib/gemini';
-import { toast } from '@/hooks/use-toast';
-import { Task } from '@/store/useStore';
+import { prioritizeTasks } from '@/lib/ai';
+import { toast } from 'sonner';
 
 export function TaskList() {
-  const { tasks, apiKey, updateTask, reorderTasks } = useStore();
+  const { tasks, updateTask, loading } = useTaskStore();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isPrioritizing, setIsPrioritizing] = useState(false);
 
@@ -17,64 +16,39 @@ export function TaskList() {
   const completedTasks = tasks.filter(t => t.status === 'done');
 
   const handleAutoPrioritize = async () => {
-    if (!apiKey) {
-      toast({
-        title: "API Key Required",
-        description: "Please add your Gemini API key in Settings",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (pendingTasks.length === 0) {
-      toast({
-        title: "No Tasks",
-        description: "Add some tasks first to prioritize them",
-      });
+      toast.info('Add some tasks first to prioritize them');
       return;
     }
 
     setIsPrioritizing(true);
     try {
       const scores = await prioritizeTasks(
-        pendingTasks.map(t => ({ id: t.id, title: t.title })),
-        apiKey
+        pendingTasks.map(t => ({ id: t.id, title: t.title }))
       );
 
       // Update each task with its new priority
-      scores.forEach(({ id, score }) => {
-        updateTask(id, { priority: score });
-      });
+      for (const { id, priority } of scores) {
+        await updateTask(id, { priority });
+      }
 
-      // Reorder tasks by priority
-      const updatedTasks = [...tasks];
-      const pending = updatedTasks.filter(t => t.status !== 'done');
-      const done = updatedTasks.filter(t => t.status === 'done');
-      
-      // Apply new scores and sort
-      pending.forEach(task => {
-        const scoreData = scores.find(s => s.id === task.id);
-        if (scoreData) {
-          task.priority = scoreData.score;
-        }
-      });
-      
-      pending.sort((a, b) => b.priority - a.priority);
-      reorderTasks([...pending, ...done]);
-
-      toast({
-        title: "Tasks Prioritized",
-        description: "AI has reordered your tasks by importance",
-      });
+      toast.success('Tasks prioritized by AI');
     } catch (error) {
-      toast({
-        title: "Prioritization Failed",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : 'Failed to prioritize');
     }
     setIsPrioritizing(false);
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  // Sort by priority
+  const sortedPending = [...pendingTasks].sort((a, b) => b.priority - a.priority);
 
   return (
     <div className="space-y-6">
@@ -88,7 +62,7 @@ export function TaskList() {
 
         <Button
           onClick={handleAutoPrioritize}
-          disabled={isPrioritizing || !apiKey}
+          disabled={isPrioritizing}
           variant="outline"
           className="gap-2 border-secondary/50 text-secondary hover:bg-secondary/10"
         >
@@ -104,7 +78,7 @@ export function TaskList() {
 
       {/* Task List */}
       <div className="space-y-3">
-        {pendingTasks.length === 0 ? (
+        {sortedPending.length === 0 ? (
           <div className="glass rounded-xl p-8 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/50 flex items-center justify-center">
               <Sparkles className="w-8 h-8 text-muted-foreground" />
@@ -115,7 +89,7 @@ export function TaskList() {
             </p>
           </div>
         ) : (
-          pendingTasks.map((task) => (
+          sortedPending.map((task) => (
             <TaskCard
               key={task.id}
               task={task}

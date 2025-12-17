@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Menu, X, LayoutDashboard, ListTodo, Settings, Zap } from 'lucide-react';
+import { Menu, X, LayoutDashboard, ListTodo, Settings, Zap, LogOut } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', to: '/' },
@@ -13,10 +15,16 @@ const navItems = [
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success('Signed out');
+    setOpen(false);
+  };
 
   return (
     <div className="md:hidden">
-      {/* Mobile Header */}
       <header className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/50 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -58,12 +66,19 @@ export function MobileNav() {
                   </NavLink>
                 ))}
               </nav>
+              {user && (
+                <div className="p-4 border-t border-border/50">
+                  <p className="text-xs text-muted-foreground truncate mb-2">{user.email}</p>
+                  <Button variant="ghost" size="sm" onClick={handleSignOut} className="w-full justify-start gap-2">
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </Button>
+                </div>
+              )}
             </SheetContent>
           </Sheet>
         </div>
       </header>
-
-      {/* Spacer for fixed header */}
       <div className="h-16" />
     </div>
   );

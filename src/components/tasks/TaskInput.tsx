@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { Plus, Link2, Sparkles, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useStore } from '@/store/useStore';
-import { sanitizeTask } from '@/lib/gemini';
-import { toast } from '@/hooks/use-toast';
+import { useTaskStore } from '@/hooks/useTaskStore';
+import { sanitizeTask } from '@/lib/ai';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 export function TaskInput() {
@@ -13,7 +13,7 @@ export function TaskInput() {
   const [showUrl, setShowUrl] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const { addTask, apiKey } = useStore();
+  const { addTask } = useTaskStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,24 +22,20 @@ export function TaskInput() {
     const originalTitle = title.trim();
     let finalTitle = originalTitle;
 
-    // If short task and API key exists, sanitize with AI
-    if (originalTitle.split(' ').length < 5 && apiKey) {
+    // If short task, sanitize with AI
+    if (originalTitle.split(' ').length < 5) {
       setIsProcessing(true);
       try {
-        finalTitle = await sanitizeTask(originalTitle, apiKey);
-        toast({
-          title: "Task Enhanced",
-          description: "AI transformed your vague task into a SMART goal",
-        });
+        finalTitle = await sanitizeTask(originalTitle);
+        toast.success('AI enhanced your task into a SMART goal');
       } catch (error) {
         console.error('Failed to sanitize task:', error);
-        // Use original if AI fails
         finalTitle = originalTitle;
       }
       setIsProcessing(false);
     }
 
-    addTask({
+    await addTask({
       title: finalTitle,
       originalTitle,
       description: '',
@@ -111,13 +107,6 @@ export function TaskInput() {
             className="h-10 bg-muted/30 border-border/50 text-sm"
           />
         </div>
-      )}
-
-      {!apiKey && (
-        <p className="text-xs text-muted-foreground flex items-center gap-1">
-          <Sparkles className="w-3 h-3" />
-          Add your Gemini API key in Settings to enable AI task enhancement
-        </p>
       )}
     </form>
   );
