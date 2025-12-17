@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
-  X, 
   Sparkles, 
   Loader2, 
   Send, 
@@ -17,9 +16,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Task, useStore } from '@/store/useStore';
-import { generateExecutionPlan, askTutor } from '@/lib/gemini';
-import { toast } from '@/hooks/use-toast';
+import { Task, useTaskStore, ChatMessage } from '@/hooks/useTaskStore';
+import { generateExecutionPlan, askTutor } from '@/lib/ai';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 interface TaskModalProps {
@@ -34,7 +33,7 @@ const statusConfig = {
 };
 
 export function TaskModal({ task, onClose }: TaskModalProps) {
-  const { apiKey, updateTask, addChatMessage } = useStore();
+  const { updateTask, addChatMessage } = useTaskStore();
   const [notes, setNotes] = useState('');
   const [chatInput, setChatInput] = useState('');
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
@@ -55,58 +54,42 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
 
   const StatusIcon = statusConfig[task.status].icon;
 
-  const handleSaveNotes = () => {
-    updateTask(task.id, { notes });
-    toast({ title: "Notes saved" });
+  const handleSaveNotes = async () => {
+    await updateTask(task.id, { notes });
+    toast.success('Notes saved');
   };
 
   const handleGeneratePlan = async () => {
-    if (!apiKey) {
-      toast({
-        title: "API Key Required",
-        description: "Please add your Gemini API key in Settings",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsGeneratingPlan(true);
     try {
-      const plan = await generateExecutionPlan(task.title, apiKey);
-      updateTask(task.id, { executionPlan: plan });
-      toast({ title: "Execution plan generated!" });
+      const plan = await generateExecutionPlan(task.title);
+      await updateTask(task.id, { executionPlan: plan });
+      toast.success('Execution plan generated!');
     } catch (error) {
-      toast({
-        title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : 'Failed to generate plan');
     }
     setIsGeneratingPlan(false);
   };
 
   const handleSendMessage = async () => {
-    if (!chatInput.trim() || !apiKey) return;
+    if (!chatInput.trim()) return;
 
     const userMessage = chatInput.trim();
     setChatInput('');
-    addChatMessage(task.id, { role: 'user', content: userMessage });
+    
+    // Add user message
+    await addChatMessage(task.id, { role: 'user', content: userMessage });
 
     setIsSendingMessage(true);
     try {
       const response = await askTutor(
         task.title,
         userMessage,
-        task.chatHistory,
-        apiKey
+        task.chatHistory
       );
-      addChatMessage(task.id, { role: 'assistant', content: response });
+      await addChatMessage(task.id, { role: 'assistant', content: response });
     } catch (error) {
-      toast({
-        title: "Message Failed",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : 'Failed to send message');
     }
     setIsSendingMessage(false);
   };
@@ -197,7 +180,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                   </p>
                   <Button 
                     onClick={handleGeneratePlan}
-                    disabled={isGeneratingPlan || !apiKey}
+                    disabled={isGeneratingPlan}
                     className="gap-2 bg-gradient-to-r from-secondary to-secondary/80"
                   >
                     {isGeneratingPlan ? (
@@ -214,7 +197,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
             {task.executionPlan && (
               <Button 
                 onClick={handleGeneratePlan}
-                disabled={isGeneratingPlan || !apiKey}
+                disabled={isGeneratingPlan}
                 variant="outline"
                 className="mt-3 gap-2 border-secondary/50 text-secondary"
               >
@@ -239,7 +222,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
                     <p className="text-sm mt-1">Try: "How do I start?" or "Explain this concept"</p>
                   </div>
                 ) : (
-                  task.chatHistory.map((msg) => (
+                  task.chatHistory.map((msg: ChatMessage) => (
                     <div
                       key={msg.id}
                       className={cn(
@@ -275,7 +258,7 @@ export function TaskModal({ task, onClose }: TaskModalProps) {
               />
               <Button
                 onClick={handleSendMessage}
-                disabled={!chatInput.trim() || isSendingMessage || !apiKey}
+                disabled={!chatInput.trim() || isSendingMessage}
                 className="self-end h-[60px] px-4 bg-gradient-to-r from-neon-cyan to-neon-cyan/80"
               >
                 {isSendingMessage ? (

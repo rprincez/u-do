@@ -1,9 +1,9 @@
-import { useStore } from '@/store/useStore';
+import { useTaskStore } from '@/hooks/useTaskStore';
 import { CheckCircle2, Clock, Flame, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function KPICards() {
-  const { tasks } = useStore();
+  const { tasks } = useTaskStore();
 
   const pending = tasks.filter(t => t.status !== 'done').length;
   const completed = tasks.filter(t => t.status === 'done').length;

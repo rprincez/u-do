@@ -2,48 +2,30 @@ import { useState } from 'react';
 import { Brain, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useStore } from '@/store/useStore';
-import { generateDailyPlan } from '@/lib/gemini';
-import { toast } from '@/hooks/use-toast';
+import { useTaskStore } from '@/hooks/useTaskStore';
+import { generateDailyPlan } from '@/lib/ai';
+import { toast } from 'sonner';
 
 export function DailyBrain() {
-  const { tasks, apiKey, dailyPlan, setDailyPlan } = useStore();
+  const { tasks } = useTaskStore();
+  const [dailyPlan, setDailyPlan] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
 
   const pendingTasks = tasks.filter(t => t.status !== 'done');
 
   const handleGeneratePlan = async () => {
-    if (!apiKey) {
-      toast({
-        title: "API Key Required",
-        description: "Please add your Gemini API key in Settings",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (pendingTasks.length === 0) {
-      toast({
-        title: "No Tasks",
-        description: "Add some tasks first to generate a daily plan",
-      });
+      toast.info('Add some tasks first to generate a daily plan');
       return;
     }
 
     setIsGenerating(true);
     try {
-      const plan = await generateDailyPlan(
-        pendingTasks.map(t => t.title),
-        apiKey
-      );
+      const plan = await generateDailyPlan(pendingTasks.map(t => ({ title: t.title })));
       setDailyPlan(plan);
-      toast({ title: "Daily plan generated!" });
+      toast.success('Daily plan generated!');
     } catch (error) {
-      toast({
-        title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Unknown error",
-        variant: "destructive",
-      });
+      toast.error(error instanceof Error ? error.message : 'Failed to generate plan');
     }
     setIsGenerating(false);
   };
@@ -63,7 +45,7 @@ export function DailyBrain() {
 
         <Button
           onClick={handleGeneratePlan}
-          disabled={isGenerating || !apiKey}
+          disabled={isGenerating}
           variant="outline"
           size="sm"
           className="gap-2 border-secondary/50 text-secondary hover:bg-secondary/10"

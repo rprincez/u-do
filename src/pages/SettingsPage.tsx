@@ -1,59 +1,78 @@
-import { ApiKeySettings } from '@/components/settings/ApiKeySettings';
-import { Zap, Github, Info } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Sparkles, User, Info, Zap } from 'lucide-react';
 
 export default function SettingsPage() {
+  const { user } = useAuth();
+
   return (
-    <div className="space-y-8">
-      {/* Header */}
+    <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground font-display tracking-wide">
-          Settings
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Configure your AI workspace
-        </p>
+        <h1 className="text-3xl font-bold font-display text-foreground">Settings</h1>
+        <p className="text-muted-foreground mt-1">Manage your workspace preferences</p>
       </div>
 
-      {/* API Key Settings */}
-      <ApiKeySettings />
+      <div className="grid gap-6 max-w-2xl">
+        {/* Account Info */}
+        <Card className="glass border-border/50">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/20">
+                <User className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-foreground">Account</CardTitle>
+                <CardDescription>Your account information</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Email</p>
+            <p className="text-foreground">{user?.email}</p>
+          </CardContent>
+        </Card>
 
-      {/* About Section */}
-      <div className="glass rounded-xl p-6 max-w-2xl">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-muted">
-            <Info className="w-5 h-5 text-foreground" />
-          </div>
-          <h3 className="text-lg font-semibold text-foreground">About U-DO</h3>
-        </div>
-        
-        <div className="space-y-4 text-sm text-muted-foreground">
-          <p>
-            <strong className="text-foreground">U-DO: The AI Workspace</strong> is designed to eliminate 
-            "Blank Page Paralysis" by transforming vague intentions into actionable, structured plans.
-          </p>
-          
-          <div className="space-y-2">
-            <p className="text-foreground font-medium">Key Features:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li><strong className="text-primary">The Sanitizer:</strong> AI automatically rewrites vague tasks into SMART goals</li>
-              <li><strong className="text-secondary">The Architect:</strong> Generates step-by-step execution plans</li>
-              <li><strong className="text-neon-cyan">The Judge:</strong> Auto-prioritizes tasks based on importance</li>
-              <li><strong className="text-foreground">AI Tutor:</strong> Context-aware assistant for each task</li>
+        {/* AI Features */}
+        <Card className="glass border-secondary/30">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-secondary/20">
+                <Sparkles className="w-5 h-5 text-secondary" />
+              </div>
+              <div>
+                <CardTitle className="text-foreground">AI Features</CardTitle>
+                <CardDescription>Powered by our AI infrastructure - no API key needed!</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-primary" />Smart task enhancement</li>
+              <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-primary" />Auto-prioritization</li>
+              <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-primary" />Execution plan generation</li>
+              <li className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-primary" />AI Tutor chat</li>
             </ul>
-          </div>
+          </CardContent>
+        </Card>
 
-          <p>
-            Built with React, Tailwind CSS, and powered by Google Gemini AI.
-            All data is stored locally in your browser.
-          </p>
-        </div>
-
-        <div className="mt-6 pt-4 border-t border-border/50 flex items-center gap-4">
-          <div className="flex items-center gap-2 text-primary">
-            <Zap className="w-4 h-4" />
-            <span className="text-sm font-medium">v1.0.0</span>
-          </div>
-        </div>
+        {/* About */}
+        <Card className="glass border-border/50">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-muted">
+                <Info className="w-5 h-5 text-foreground" />
+              </div>
+              <CardTitle className="text-foreground">About U-DO</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            <p>U-DO transforms vague intentions into actionable plans with AI assistance. Your tasks sync across devices.</p>
+            <div className="mt-4 flex items-center gap-2 text-primary">
+              <Zap className="w-4 h-4" />
+              <span className="font-medium">v2.0.0</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
